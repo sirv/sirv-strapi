@@ -50,12 +50,12 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@sirv/core": "workspace:*",
-    "@sirv/sirv-client": "workspace:*",
-    "@sirv/url-builder": "workspace:*",
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@sirv/core": "workspace:*",
+    "@sirv/sirv-client": "workspace:*",
+    "@sirv/url-builder": "workspace:*",
     "@strapi/design-system": "^2.2.1",
     "@strapi/icons": "^2.2.1",
     "@strapi/sdk-plugin": "^6.1.1",

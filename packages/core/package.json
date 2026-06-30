@@ -12,6 +12,18 @@
     ".": {
       "types": "./src/index.ts",
       "default": "./src/index.ts"
+    },
+    "./assets": {
+      "types": "./src/assets.ts",
+      "default": "./src/assets.ts"
+    },
+    "./search-query": {
+      "types": "./src/hooks/search-query.ts",
+      "default": "./src/hooks/search-query.ts"
+    },
+    "./types": {
+      "types": "./src/types.ts",
+      "default": "./src/types.ts"
     }
   },
   "scripts": {

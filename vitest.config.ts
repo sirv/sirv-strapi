@@ -13,7 +13,6 @@ export default defineConfig({
       'apps/strapi-plugin/**/src/**/*.test.{ts,tsx}',
       'tests/**/*.test.ts',
     ],
-    // The live test hits the real Sirv API; opt in via `pnpm test:live`.
-    exclude: ['**/node_modules/**', '**/dist/**', '**/live.test.ts'],
+    exclude: ['**/node_modules/**', '**/dist/**'],
   },
 });

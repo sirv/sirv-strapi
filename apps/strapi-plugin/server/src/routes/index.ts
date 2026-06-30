@@ -19,6 +19,12 @@ export default {
         handler: 'auth.selectAccount',
         config: adminAuth,
       },
+      {
+        method: 'POST',
+        path: '/auth/connect-credentials',
+        handler: 'auth.connectWithCredentials',
+        config: adminAuth,
+      },
       { method: 'POST', path: '/auth/logout', handler: 'auth.logout', config: adminAuth },
 
       // DAM
