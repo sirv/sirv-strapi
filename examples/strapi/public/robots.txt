@@ -1,0 +1,3 @@
+# Strapi example app
+User-agent: *
+Disallow: /admin

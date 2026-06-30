@@ -1,0 +1,88 @@
+{
+  "name": "@sirv/strapi-plugin",
+  "version": "0.1.0",
+  "description": "Add Sirv as a media source inside Strapi v5: connect your account, browse the Sirv DAM, and pick images, videos, 360 spins or views. Assets stay on Sirv and render on the frontend with @sirv/react.",
+  "keywords": [
+    "strapi",
+    "plugin",
+    "strapi-plugin",
+    "sirv",
+    "dam",
+    "media",
+    "image",
+    "video",
+    "cdn",
+    "custom-field"
+  ],
+  "homepage": "https://github.com/sirv/sirv-strapi#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sirv/sirv-strapi.git",
+    "directory": "apps/strapi-plugin"
+  },
+  "bugs": { "url": "https://github.com/sirv/sirv-strapi/issues" },
+  "license": "MIT",
+  "type": "commonjs",
+  "exports": {
+    "./package.json": "./package.json",
+    "./strapi-admin": {
+      "types": "./dist/admin/src/index.d.ts",
+      "source": "./admin/src/index.ts",
+      "import": "./dist/admin/index.mjs",
+      "require": "./dist/admin/index.js",
+      "default": "./dist/admin/index.js"
+    },
+    "./strapi-server": {
+      "types": "./dist/server/src/index.d.ts",
+      "source": "./server/src/index.ts",
+      "import": "./dist/server/index.mjs",
+      "require": "./dist/server/index.js",
+      "default": "./dist/server/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "strapi-plugin build",
+    "watch": "strapi-plugin watch",
+    "watch:link": "strapi-plugin watch:link",
+    "verify": "strapi-plugin verify",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@sirv/core": "workspace:*",
+    "@sirv/sirv-client": "workspace:*",
+    "@sirv/url-builder": "workspace:*",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@strapi/design-system": "^2.2.1",
+    "@strapi/icons": "^2.2.1",
+    "@strapi/sdk-plugin": "^6.1.1",
+    "@strapi/strapi": "^5.49.0",
+    "@strapi/types": "^5.49.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-intl": "^6.6.0",
+    "react-router-dom": "^6.26.0",
+    "styled-components": "^6.1.0",
+    "typescript": "^5.5.3"
+  },
+  "peerDependencies": {
+    "@strapi/sdk-plugin": "^6.0.0",
+    "@strapi/strapi": "^5.0.0",
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0",
+    "react-router-dom": "^6.0.0",
+    "styled-components": "^6.0.0"
+  },
+  "strapi": {
+    "kind": "plugin",
+    "name": "sirv",
+    "displayName": "Sirv",
+    "description": "Browse, search, and pick assets from your Sirv DAM, then render them anywhere with @sirv/react."
+  },
+  "engines": {
+    "node": ">=18.0.0 <=26.x.x"
+  }
+}

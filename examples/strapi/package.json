@@ -1,0 +1,31 @@
+{
+  "name": "sirv-strapi-example",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Example Strapi v5 application with @sirv/strapi-plugin installed.",
+  "scripts": {
+    "build": "strapi build",
+    "develop": "strapi develop",
+    "start": "strapi start",
+    "strapi": "strapi"
+  },
+  "dependencies": {
+    "@sirv/strapi-plugin": "workspace:*",
+    "@strapi/plugin-cloud": "^5.49.0",
+    "@strapi/plugin-users-permissions": "^5.49.0",
+    "@strapi/strapi": "^5.49.0",
+    "better-sqlite3": "11.3.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.0",
+    "styled-components": "^6.1.0"
+  },
+  "devDependencies": {
+    "@strapi/typescript-utils": "^5.49.0",
+    "typescript": "^5.5.3"
+  },
+  "engines": {
+    "node": ">=20.0.0 <=26.x.x",
+    "npm": ">=6.0.0"
+  }
+}

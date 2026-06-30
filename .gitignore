@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build artifacts
+dist/
+build/
+.next/
+.turbo/
+.cache/
+*.tsbuildinfo
+
+# Local package tarballs (customer-style testing)
+.tarballs/
+*.tgz
+
+# Test coverage
+coverage/
+
+# Env / secrets - NEVER commit credentials
+.env
+.env.local
+.env.*.local
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.log
+*.pid
+
+# Strapi runtime
+.tmp/
+.strapi/
+.strapi-updater.json
+exports/
+
+# pnpm
+pnpm-debug.log*

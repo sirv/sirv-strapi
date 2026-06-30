@@ -1,0 +1,16 @@
+{
+  "plugin.name": "Sirv",
+  "plugin.description": "Browse, search and pick assets from your Sirv DAM.",
+  "menu.label": "Sirv",
+  "page.dam.title": "Sirv media",
+  "page.dam.subtitle": "Browse and search your connected Sirv account.",
+  "settings.section": "Sirv",
+  "settings.link": "Configuration",
+  "settings.title": "Sirv configuration",
+  "settings.subtitle": "Connect your Sirv account and set default delivery options.",
+  "settings.status.disconnected": "Not connected",
+  "settings.status.connected": "Connected",
+  "sirv-media.label": "Sirv media",
+  "sirv-media.description": "Pick an image, video, 360 spin or view from your Sirv account.",
+  "sirv-media.button.pick": "Pick from Sirv"
+}
