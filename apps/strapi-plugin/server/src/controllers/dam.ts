@@ -1,66 +1,47 @@
-import { assetFromEntry, assetFromSearch, folderFromEntry } from '@sirv/core/assets';
-import { buildSearchQuery } from '@sirv/core/search-query';
-import { buildImageUrl } from '@sirv/url-builder';
 import type { Core } from '@strapi/strapi';
 import { PLUGIN_ID } from '../constants';
-import { InvalidRequestError, NotConnectedError } from '../errors';
-import { parseTypes, respondError } from './util';
+import { InvalidRequestError } from '../errors';
+import { respondError } from './util';
 
 /**
- * DAM controller - proxies folder browse / search / file-info / thumbnail / usage to Sirv via
- * the server-held credentials. Responses are normalized to the `DamFolder` / `DamAsset` shapes
- * from `@sirv/core` so the admin DAM browser can consume them directly.
+ * DAM controller - a thin authenticated proxy to Sirv. It returns the RAW Sirv responses
+ * (readdir / search / stat / account / storage); the admin's `@sirv/core` hooks do the
+ * normalization, classification, filtering and pagination client-side. The server's only job is
+ * to hold the credentials and forward the call. No secret material is ever returned.
  */
 const controller = ({ strapi }: { strapi: Core.Strapi }) => {
   const sirv = () => strapi.plugin(PLUGIN_ID).service('sirv-client');
 
   return {
+    /** GET /sirv/dam/folder?dirname=&continuation= -> ReaddirResponse */
     async folder(ctx: any) {
       try {
-        const path = typeof ctx.query?.path === 'string' && ctx.query.path ? ctx.query.path : '/';
+        const dirname =
+          typeof ctx.query?.dirname === 'string' && ctx.query.dirname ? ctx.query.dirname : '/';
         const continuation =
           typeof ctx.query?.continuation === 'string' ? ctx.query.continuation : undefined;
-        const types = parseTypes(ctx.query?.types);
-
         const client = await sirv().getClient();
-        const res = await client.listFolder({ dirname: path, continuation });
-
-        const folders = res.contents
-          .map((entry: any) => folderFromEntry(entry, path))
-          .filter((f: unknown): f is NonNullable<typeof f> => f !== null);
-        let assets = res.contents
-          .map((entry: any) => assetFromEntry(entry, path))
-          .filter((a: unknown): a is NonNullable<typeof a> => a !== null);
-        if (types.length) assets = assets.filter((a: any) => types.includes(a.type));
-
-        ctx.body = { path, folders, assets, continuation: res.continuation ?? null };
+        ctx.body = await client.listFolder({ dirname, continuation });
       } catch (err) {
         respondError(ctx, err);
       }
     },
 
+    /** GET /sirv/dam/search?query=&from=&size=&scroll= -> SearchResponse */
     async search(ctx: any) {
       try {
-        const q = typeof ctx.query?.q === 'string' ? ctx.query.q : '';
-        const types = parseTypes(ctx.query?.types);
+        const query = typeof ctx.query?.query === 'string' ? ctx.query.query : '';
+        if (!query) throw new InvalidRequestError('query is required.');
         const from = Number.parseInt(ctx.query?.from ?? '0', 10) || 0;
         const size = Math.min(Number.parseInt(ctx.query?.size ?? '50', 10) || 50, 1000);
-
         const client = await sirv().getClient();
-        const query = buildSearchQuery(q, types);
-        const res = await client.searchFiles({ query, from, size });
-
-        let assets = res.hits
-          .map((hit: any) => assetFromSearch(hit._source))
-          .filter((a: unknown): a is NonNullable<typeof a> => a !== null);
-        if (types.length) assets = assets.filter((a: any) => types.includes(a.type));
-
-        ctx.body = { assets, total: res.total ?? assets.length, scrollId: res.scrollId ?? null };
+        ctx.body = await client.searchFiles({ query, from, size });
       } catch (err) {
         respondError(ctx, err);
       }
     },
 
+    /** GET /sirv/dam/file?filename= -> FileStat */
     async file(ctx: any) {
       try {
         const filename = ctx.query?.filename;
@@ -68,34 +49,27 @@ const controller = ({ strapi }: { strapi: Core.Strapi }) => {
           throw new InvalidRequestError('filename is required.');
         }
         const client = await sirv().getClient();
-        ctx.body = { file: await client.getFileInfo(filename) };
+        ctx.body = await client.getFileInfo(filename);
       } catch (err) {
         respondError(ctx, err);
       }
     },
 
-    async thumb(ctx: any) {
+    /** GET /sirv/dam/account -> AccountInfo (alias / delivery host for building URLs) */
+    async account(ctx: any) {
       try {
-        const filename = ctx.query?.filename;
-        if (typeof filename !== 'string' || !filename) {
-          throw new InvalidRequestError('filename is required.');
-        }
-        const size = Math.min(Number.parseInt(ctx.query?.size ?? '256', 10) || 256, 1024);
-        const creds = await sirv().getStoredCredentials();
-        if (!creds) throw new NotConnectedError();
-        const host = creds.deliveryAlias ?? `${creds.accountAlias}.sirv.com`;
-        ctx.body = {
-          url: buildImageUrl({ alias: host, path: filename }, { width: size, height: size }),
-        };
+        const client = await sirv().getClient();
+        ctx.body = await client.getAccountInfo();
       } catch (err) {
         respondError(ctx, err);
       }
     },
 
+    /** GET /sirv/usage -> StorageUsage */
     async usage(ctx: any) {
       try {
         const client = await sirv().getClient();
-        ctx.body = { usage: await client.getUsage() };
+        ctx.body = await client.getUsage();
       } catch (err) {
         respondError(ctx, err);
       }

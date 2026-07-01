@@ -1,0 +1,26 @@
+{
+  "kind": "collectionType",
+  "collectionName": "articles",
+  "info": {
+    "singularName": "article",
+    "pluralName": "articles",
+    "displayName": "Article",
+    "description": "Demo content type showing the Sirv media custom field."
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "hero": {
+      "type": "customField",
+      "customField": "plugin::sirv.sirv-media",
+      "options": {
+        "allowedTypes": ["image", "video", "spin", "view"]
+      }
+    }
+  }
+}

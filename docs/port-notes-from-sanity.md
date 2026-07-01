@@ -112,3 +112,17 @@ server endpoints rather than letting them hold credentials. `packages/sirv-clien
 - M2: the Strapi plugin's `@sirv/*` deps are **devDependencies** (like the Sanity plugin), so the
   SDK build inlines them into `dist` (the packages ship as TS source, not built JS). Only `zod` is
   a runtime dependency.
+- M5/6/8: the DAM browser is a Strapi-native `SirvDamBrowser` (Design System) driven by the SAME
+  `@sirv/core` hooks the Sanity `SirvDamBrowser` uses - so the reuse is at the HOOK layer, not the
+  headless-component layer (neither host mounts `@sirv/core`'s `DamBrowser` directly). Sanity's
+  browser talks to a real `SirvClient`; Strapi's talks to a **proxy `SirvClient`**
+  (`admin/src/api/proxy-client.ts`) that routes through the server, keeping credentials off the
+  browser. The server DAM endpoints are therefore raw passthroughs (no server-side mapping).
+- M5: stored value shape. Sanity stores a FLAT `sirvMedia` value and converts it at render time
+  with `fromSanityMedia()`. Strapi stores the `SirvFieldValue` union directly, which is exactly
+  `@sirv/react`'s `SirvMediaLike` - so NO converter is needed on the frontend. Cleaner than Sanity;
+  matches the Strapi spec (section 8).
+- M5/6: **host CSP** - new for Strapi. The admin's Content-Security-Policy blocks external images
+  by default, so the host must allow `*.sirv.com` in `img-src`/`media-src` (and `scripts.sirv.com`
+  in `script-src`). No Sanity analog (Studio has no such CSP). Configured in the example app and
+  documented in the plugin README.

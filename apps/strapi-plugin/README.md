@@ -23,6 +23,35 @@ export default {
 Restart Strapi. You will see a **Sirv** entry in the admin sidebar and a **Sirv** section under
 Settings.
 
+### Allow Sirv assets in your Content-Security-Policy
+
+Strapi's admin sets a strict CSP that blocks external images. Sirv delivers assets from
+`*.sirv.com` (or your custom domain), so extend `strapi::security` in `config/middlewares.ts`,
+otherwise DAM thumbnails and previews are blocked:
+
+```ts
+export default [
+  'strapi::logger',
+  'strapi::errors',
+  {
+    name: 'strapi::security',
+    config: {
+      contentSecurityPolicy: {
+        useDefaults: true,
+        directives: {
+          'img-src': ["'self'", 'data:', 'blob:', 'market-assets.strapi.io', 'https://*.sirv.com'],
+          'media-src': ["'self'", 'data:', 'blob:', 'https://*.sirv.com'],
+          'script-src': ["'self'", 'blob:', 'https://scripts.sirv.com', 'market-assets.strapi.io'],
+        },
+      },
+    },
+  },
+  // ...the rest of the default middleware stack
+];
+```
+
+Use your custom delivery domain instead of `*.sirv.com` if you have one.
+
 ## Use the custom field
 
 Add the `sirv-media` custom field to any content type (via the Content-Type Builder, or in schema):
@@ -39,8 +68,19 @@ Add the `sirv-media` custom field to any content type (via the Content-Type Buil
 }
 ```
 
-The field stores a `SirvFieldValue` (a discriminated union over image | video | spin | view).
-Render it on your frontend with `@sirv/react`.
+Editors see a "Pick from Sirv" button that opens the DAM browser; picking an asset stores a
+`SirvFieldValue` (a discriminated union over image | video | spin | view).
+
+That stored value is exactly what `@sirv/react` consumes - render it directly, no converter:
+
+```tsx
+import { SirvProvider, SirvMedia } from '@sirv/react';
+
+// `article.hero` is the stored sirv-media value
+<SirvProvider>
+  <SirvMedia value={article.hero} width={800} />
+</SirvProvider>;
+```
 
 ## Requirements
 
