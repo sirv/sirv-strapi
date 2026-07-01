@@ -9,16 +9,10 @@ export interface AdminFetchClient {
   post<T = unknown>(url: string, body?: unknown): Promise<{ data: T }>;
 }
 
-export interface SirvDefaults {
-  quality?: number;
-  format?: 'optimal' | 'webp' | 'jpg' | 'png' | 'original';
-}
-
 export interface ConnectionStatus {
   connected: boolean;
   accountAlias?: string;
   deliveryAlias?: string;
-  defaults?: SirvDefaults;
 }
 
 /** Subset of Sirv storage usage surfaced in Settings (bytes, except `files`). */
@@ -95,10 +89,6 @@ export function createSirvApi(client: AdminFetchClient) {
 
     async logout(): Promise<void> {
       await client.post(`${BASE}/auth/logout`);
-    },
-
-    async updateSettings(defaults: SirvDefaults): Promise<ConnectionStatus> {
-      return (await client.post<ConnectionStatus>(`${BASE}/settings`, { defaults })).data;
     },
 
     async getUsage(): Promise<UsageSummary> {

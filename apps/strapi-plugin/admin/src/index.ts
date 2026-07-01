@@ -6,18 +6,7 @@ import { PLUGIN_ID } from './pluginId';
 
 export default {
   register(app: any) {
-    // 1. Sidebar entry -> dedicated Sirv DAM page.
-    app.addMenuLink({
-      to: `plugins/${PLUGIN_ID}`,
-      icon: PluginIcon,
-      intlLabel: {
-        id: getTranslation('menu.label'),
-        defaultMessage: 'Sirv',
-      },
-      Component: () => import('./pages/App'),
-    });
-
-    // 2. Custom field `plugin::sirv.sirv-media`, usable on any content type.
+    // Custom field `plugin::sirv.sirv-media`, usable on any content type.
     app.customFields.register({
       name: SIRV_MEDIA_FIELD,
       pluginId: PLUGIN_ID,

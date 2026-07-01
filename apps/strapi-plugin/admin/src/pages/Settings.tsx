@@ -27,7 +27,7 @@ const SettingsPage = () => {
           <Typography variant="epsilon" textColor="neutral600">
             {formatMessage({
               id: getTranslation('settings.subtitle'),
-              defaultMessage: 'Connect your Sirv account and set default delivery options.',
+              defaultMessage: 'Connect your Sirv account.',
             })}
           </Typography>
         </Flex>
