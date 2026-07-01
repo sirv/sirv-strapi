@@ -1,6 +1,14 @@
 'use client';
 
-import { SirvImage, SirvMedia, SirvProvider, SirvSpin, SirvVideo, SirvView } from '@sirv/react';
+import {
+  SirvGallery,
+  SirvImage,
+  SirvMedia,
+  SirvProvider,
+  SirvSpin,
+  SirvVideo,
+  SirvView,
+} from '@sirv/react';
 import type { ReactNode } from 'react';
 
 interface Showcase {
@@ -10,6 +18,7 @@ interface Showcase {
   spin?: unknown;
   viewer?: unknown;
   anyMedia?: unknown;
+  gallery?: unknown[];
 }
 
 function Section({ title, code, children }: { title: string; code: string; children: ReactNode }) {
@@ -70,6 +79,12 @@ export function ShowcaseView({ showcase }: { showcase: Showcase | null }) {
       {showcase.anyMedia ? (
         <Section title="Any media (polymorphic)" code="<SirvMedia value={anyMedia} />">
           <SirvMedia value={asValue(showcase.anyMedia)} width={640} />
+        </Section>
+      ) : null}
+
+      {showcase.gallery && showcase.gallery.length > 0 ? (
+        <Section title="Gallery (multiple)" code="<SirvGallery items={gallery} />">
+          <SirvGallery items={asValue(showcase.gallery)} itemWidth={200} itemHeight={200} />
         </Section>
       ) : null}
     </SirvProvider>

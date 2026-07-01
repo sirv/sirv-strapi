@@ -39,6 +39,11 @@
       "type": "customField",
       "customField": "plugin::sirv.sirv-media",
       "options": { "allowedTypes": ["image", "video", "spin", "view"] }
+    },
+    "gallery": {
+      "type": "customField",
+      "customField": "plugin::sirv.sirv-media",
+      "options": { "allowedTypes": ["image", "video", "spin", "view"], "multiple": true }
     }
   }
 }

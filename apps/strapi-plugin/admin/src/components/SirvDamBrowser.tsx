@@ -10,19 +10,25 @@ import {
 import type { SirvClient } from '@sirv/sirv-client';
 import { buildUrl } from '@sirv/url-builder';
 import { Box, Button, Flex, Link, Loader, Typography } from '@strapi/design-system';
-import { ArrowLeft, File as FileIcon, Folder, House, Search } from '@strapi/icons';
-import { useState } from 'react';
+import { ArrowLeft, Check, File as FileIcon, Folder, House, Search } from '@strapi/icons';
+import { useEffect, useState } from 'react';
+import { loadSirvJs, startSirv } from './sirvjs';
 
 export interface SirvDamBrowserProps {
   client: SirvClient;
   /** Account delivery host for thumbnails, e.g. "igor.sirv.com". */
   alias: string;
   allowedTypes?: BrowseType[];
-  /** Called when an asset is confirmed. Omit for a browse-only view (the dedicated DAM page). */
+  /** Single-select confirm. */
   onSelect?: (asset: DamAsset) => void;
+  /** When true, the browser lets the user pick several assets and confirm them together. */
+  multiple?: boolean;
+  /** Multi-select confirm (used when `multiple`). */
+  onSelectMany?: (assets: DamAsset[]) => void;
 }
 
 const THUMB = 220;
+const FONT = '1.2rem';
 
 const TYPE_DISPLAY: Record<BrowseType, string> = {
   image: 'Image',
@@ -41,10 +47,7 @@ function manageUrl(asset: DamAsset): string {
   return `https://my.sirv.com/#/browse${dir}?preview=${encodeURIComponent(asset.path)}`;
 }
 
-/**
- * A static thumbnail per type. Spins use a rendered frame; views append `?thumb`; videos and
- * 3D models append `?thumbnail=<size>`. Returns null for generic files (icon fallback).
- */
+/** A static thumbnail per type (used in the grid). Returns null for generic files (icon). */
 function thumbUrl(asset: DamAsset, alias: string, size = THUMB): string | null {
   if (!alias) return null;
   const input = { alias, path: asset.path };
@@ -65,13 +68,22 @@ function thumbUrl(asset: DamAsset, alias: string, size = THUMB): string | null {
 
 const ICON_STYLE: React.CSSProperties = { width: '3rem', height: '3rem' };
 
+/** Hover styling requested for grid items (bg #393845, border #777). */
+function useHover() {
+  const [hover, setHover] = useState(false);
+  return {
+    hover,
+    handlers: { onMouseEnter: () => setHover(true), onMouseLeave: () => setHover(false) },
+  };
+}
+
 function Breadcrumb({ path, onNavigate }: { path: string; onNavigate: (p: string) => void }) {
   const segs = path.split('/').filter(Boolean);
   const crumbs = [{ name: 'Home', path: '/' }].concat(
     segs.map((s, i) => ({ name: s, path: `/${segs.slice(0, i + 1).join('/')}` })),
   );
   return (
-    <Flex alignItems="center" gap={1} wrap="wrap">
+    <Flex alignItems="center" gap={1} wrap="wrap" style={{ fontSize: FONT }}>
       {crumbs.map((c, i) => {
         const last = i === crumbs.length - 1;
         return (
@@ -95,11 +107,7 @@ function Breadcrumb({ path, onNavigate }: { path: string; onNavigate: (p: string
               {i === 0 ? <House aria-hidden /> : null}
               {i === 0 ? 'Home' : c.name}
             </button>
-            {last ? null : (
-              <Typography variant="pi" textColor="neutral400">
-                /
-              </Typography>
-            )}
+            {last ? null : <span style={{ color: '#8e8ea9' }}>/</span>}
           </Flex>
         );
       })}
@@ -109,8 +117,10 @@ function Breadcrumb({ path, onNavigate }: { path: string; onNavigate: (p: string
 
 const cardStyle: React.CSSProperties = { cursor: 'pointer', textAlign: 'center', color: '#fff' };
 const cardLabel: React.CSSProperties = { color: '#fff' };
+const HOVER: React.CSSProperties = { background: '#393845', borderColor: '#777' };
 
 function FolderCard({ folder, onOpen }: { folder: DamFolder; onOpen: () => void }) {
+  const { hover, handlers } = useHover();
   return (
     <Box
       tag="button"
@@ -120,7 +130,8 @@ function FolderCard({ folder, onOpen }: { folder: DamFolder; onOpen: () => void 
       hasRadius
       background="neutral0"
       borderColor="neutral200"
-      style={cardStyle}
+      style={{ ...cardStyle, ...(hover ? HOVER : {}) }}
+      {...handlers}
     >
       <Flex direction="column" alignItems="center" gap={2}>
         <Box
@@ -140,8 +151,15 @@ function AssetCard({
   asset,
   alias,
   onClick,
-}: { asset: DamAsset; alias: string; onClick: () => void }) {
+  selected,
+}: {
+  asset: DamAsset;
+  alias: string;
+  onClick: () => void;
+  selected?: boolean;
+}) {
   const [failed, setFailed] = useState(false);
+  const { hover, handlers } = useHover();
   const src = thumbUrl(asset, alias);
   return (
     <Box
@@ -151,9 +169,34 @@ function AssetCard({
       padding={2}
       hasRadius
       background="neutral0"
-      borderColor="neutral200"
-      style={cardStyle}
+      borderColor={selected ? 'primary600' : 'neutral200'}
+      style={{
+        ...cardStyle,
+        position: 'relative',
+        ...(hover ? HOVER : {}),
+        ...(selected ? { borderColor: '#4945ff', outline: '1px solid #4945ff' } : {}),
+      }}
+      {...handlers}
     >
+      {selected ? (
+        <Box
+          style={{
+            position: 'absolute',
+            top: 6,
+            right: 6,
+            background: '#4945ff',
+            color: '#fff',
+            borderRadius: '50%',
+            width: 22,
+            height: 22,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Check aria-hidden />
+        </Box>
+      ) : null}
       <Flex direction="column" alignItems="stretch" gap={2}>
         <Flex
           alignItems="center"
@@ -184,6 +227,15 @@ function AssetCard({
   );
 }
 
+/** Live sirv.js embed for spins, views and videos (interactive real preview). */
+function LiveEmbed({ url }: { url: string }) {
+  useEffect(() => {
+    loadSirvJs();
+    return startSirv();
+  }, []);
+  return <div key={url} className="Sirv" data-src={url} style={{ width: '100%', height: 400 }} />;
+}
+
 function Preview({
   asset,
   alias,
@@ -195,13 +247,11 @@ function Preview({
   onConfirm: (a: DamAsset) => void;
   onBack: () => void;
 }) {
-  const [thumbFailed, setThumbFailed] = useState(false);
   const url = assetUrl(asset, alias);
-  const still = thumbUrl(asset, alias, 640);
-  const isImage = asset.type === 'image';
-  const isVideo = asset.type === 'video';
+  // Spins, views and videos get a real interactive preview via sirv.js.
+  const live = asset.type === 'spin' || asset.type === 'view' || asset.type === 'video';
   const imageSrc =
-    isImage && alias
+    asset.type === 'image' && alias
       ? buildUrl({ alias, path: asset.path }, { width: 640, format: 'optimal' })
       : null;
 
@@ -212,24 +262,10 @@ function Preview({
         justifyContent="center"
         style={{ minHeight: 280, overflow: 'hidden' }}
       >
-        {isVideo ? (
-          // biome-ignore lint/a11y/useMediaCaption: source assets have no caption track
-          <video
-            src={url}
-            poster={still ?? undefined}
-            controls
-            preload="metadata"
-            style={{ maxWidth: '100%', maxHeight: 420, background: '#000' }}
-          />
+        {live ? (
+          <LiveEmbed url={url} />
         ) : imageSrc ? (
           <img src={imageSrc} alt={asset.name} style={{ maxWidth: '100%', maxHeight: 420 }} />
-        ) : still && !thumbFailed ? (
-          <img
-            src={still}
-            alt={asset.name}
-            onError={() => setThumbFailed(true)}
-            style={{ maxWidth: '100%', maxHeight: 420 }}
-          />
         ) : (
           <Typography textColor="neutral500">{TYPE_DISPLAY[asset.type]}</Typography>
         )}
@@ -246,7 +282,7 @@ function Preview({
             Open original
           </Link>
           <Link href={manageUrl(asset)} isExternal>
-            Open in Sirv
+            Open on my.sirv.com
           </Link>
         </Flex>
       </Flex>
@@ -266,10 +302,18 @@ function Preview({
 }
 
 /** Strapi Design System DAM browser driven by the @sirv/core data hooks. */
-export function SirvDamBrowser({ client, alias, allowedTypes, onSelect }: SirvDamBrowserProps) {
+export function SirvDamBrowser({
+  client,
+  alias,
+  allowedTypes,
+  onSelect,
+  multiple,
+  onSelectMany,
+}: SirvDamBrowserProps) {
   const [path, setPath] = useState('/');
   const [term, setTerm] = useState('');
   const [preview, setPreview] = useState<DamAsset | null>(null);
+  const [selected, setSelected] = useState<DamAsset[]>([]);
   const typeFilter = useTypeFilter(allowedTypes);
   const includeOther = typeFilter.allowed.includes('file');
 
@@ -291,6 +335,13 @@ export function SirvDamBrowser({ client, alias, allowedTypes, onSelect }: SirvDa
   const empty = folders.length === 0 && assets.length === 0;
   const hasMore = searching ? searchState.hasMore : folderState.hasMore;
   const loadMore = searching ? searchState.loadMore : folderState.loadMore;
+
+  const isSelected = (a: DamAsset) => selected.some((s) => s.path === a.path);
+  const toggleSelected = (a: DamAsset) =>
+    setSelected((prev) =>
+      prev.some((s) => s.path === a.path) ? prev.filter((s) => s.path !== a.path) : [...prev, a],
+    );
+  const onCardClick = (a: DamAsset) => (multiple ? toggleSelected(a) : setPreview(a));
 
   const navigate = (next: string) => {
     setTerm('');
@@ -347,7 +398,13 @@ export function SirvDamBrowser({ client, alias, allowedTypes, onSelect }: SirvDa
           <FolderCard key={f.path} folder={f} onOpen={() => navigate(f.path)} />
         ))}
         {assets.map((a) => (
-          <AssetCard key={a.path} asset={a} alias={alias} onClick={() => setPreview(a)} />
+          <AssetCard
+            key={a.path}
+            asset={a}
+            alias={alias}
+            selected={multiple ? isSelected(a) : undefined}
+            onClick={() => onCardClick(a)}
+          />
         ))}
       </Box>
 
@@ -372,11 +429,42 @@ export function SirvDamBrowser({ client, alias, allowedTypes, onSelect }: SirvDa
           </Button>
         </Flex>
       ) : null}
+
+      {multiple ? (
+        <Flex
+          justifyContent="space-between"
+          alignItems="center"
+          gap={3}
+          padding={3}
+          background="neutral100"
+          hasRadius
+          style={{ position: 'sticky', bottom: 0 }}
+        >
+          <Typography textColor="neutral700">{selected.length} selected</Typography>
+          <Flex gap={2}>
+            <Button
+              type="button"
+              variant="tertiary"
+              disabled={selected.length === 0}
+              onClick={() => setSelected([])}
+            >
+              Clear
+            </Button>
+            <Button
+              type="button"
+              disabled={selected.length === 0}
+              onClick={() => onSelectMany?.(selected)}
+            >
+              {selected.length === 1 ? 'Add 1 asset' : `Add ${selected.length} assets`}
+            </Button>
+          </Flex>
+        </Flex>
+      ) : null}
     </Flex>
   );
 }
 
-/** Small controlled search field (kept separate so the icon import stays local). */
+/** Controlled search field (1.2rem, per request). */
 function TextInputSearch({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
     <Flex
@@ -387,7 +475,7 @@ function TextInputSearch({ value, onChange }: { value: string; onChange: (v: str
       background="neutral0"
       hasRadius
       borderColor="neutral200"
-      style={{ height: 40 }}
+      style={{ height: 44 }}
     >
       <Search aria-hidden />
       <input
@@ -402,6 +490,7 @@ function TextInputSearch({ value, onChange }: { value: string; onChange: (v: str
           height: '100%',
           color: 'inherit',
           font: 'inherit',
+          fontSize: FONT,
         }}
       />
     </Flex>
