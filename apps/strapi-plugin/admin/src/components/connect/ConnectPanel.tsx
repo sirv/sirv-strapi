@@ -1,4 +1,4 @@
-import { Badge, Box, Button, Flex, Loader, Typography } from '@strapi/design-system';
+import { Box, Button, Flex, Loader, Typography } from '@strapi/design-system';
 import { useEffect, useRef } from 'react';
 import type { ConnectionStatus } from '../../api/sirv-api';
 import { useSirvConnection } from '../../hooks/useSirvConnection';
@@ -17,12 +17,7 @@ interface ConnectedViewProps {
 
 const ConnectedView = ({ connection, onDisconnect, busy }: ConnectedViewProps) => (
   <Flex justifyContent="space-between" alignItems="center" gap={4} wrap="wrap">
-    <Flex alignItems="center" gap={2}>
-      <Badge>Connected</Badge>
-      <Typography>
-        account: <Typography fontWeight="bold">{connection?.accountAlias ?? 'Sirv'}</Typography>
-      </Typography>
-    </Flex>
+    <Typography>Connected account: {connection?.accountAlias ?? 'Sirv'}</Typography>
     <Button variant="danger-light" onClick={onDisconnect} loading={busy}>
       Disconnect
     </Button>
