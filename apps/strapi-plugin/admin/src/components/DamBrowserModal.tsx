@@ -4,7 +4,11 @@ import { Box, Flex, Loader, Modal, Typography } from '@strapi/design-system';
 import { useFetchClient } from '@strapi/strapi/admin';
 import { useEffect, useMemo, useState } from 'react';
 import { createProxyClient } from '../api/proxy-client';
-import { type SirvFieldValue, damAssetToFieldValue } from '../custom-fields/sirv-media/value';
+import {
+  type SirvFieldValue,
+  damAssetToFieldValue,
+  enrichFieldValue,
+} from '../custom-fields/sirv-media/value';
 import { SirvDamBrowser } from './SirvDamBrowser';
 
 export interface DamBrowserModalProps {
@@ -57,15 +61,17 @@ export const DamBrowserModal = ({
       });
   }, [open, status, client]);
 
-  const handleSelect = (asset: DamAsset) => {
+  const handleSelect = async (asset: DamAsset) => {
     if (!alias) return;
-    onPicked(damAssetToFieldValue(asset, alias));
+    // Enrich with the asset's Sirv title/description (alt/caption) before storing.
+    const value = await enrichFieldValue(damAssetToFieldValue(asset, alias));
+    onPicked(value);
     onOpenChange(false);
   };
 
   return (
     <Modal.Root open={open} onOpenChange={onOpenChange}>
-      <Modal.Content style={{ maxWidth: '64rem', width: '90vw' }}>
+      <Modal.Content style={{ width: '90vw' }}>
         <Modal.Header>
           <Modal.Title>Pick from Sirv</Modal.Title>
         </Modal.Header>

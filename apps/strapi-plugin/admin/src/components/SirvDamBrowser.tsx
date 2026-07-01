@@ -9,7 +9,7 @@ import {
 } from '@sirv/core';
 import type { SirvClient } from '@sirv/sirv-client';
 import { buildUrl } from '@sirv/url-builder';
-import { Box, Button, Flex, Loader, Typography } from '@strapi/design-system';
+import { Box, Button, Flex, Link, Loader, Typography } from '@strapi/design-system';
 import { ArrowLeft, File as FileIcon, Folder, House, Search } from '@strapi/icons';
 import { useState } from 'react';
 
@@ -22,7 +22,7 @@ export interface SirvDamBrowserProps {
   onSelect?: (asset: DamAsset) => void;
 }
 
-const THUMB = 200;
+const THUMB = 220;
 
 const TYPE_DISPLAY: Record<BrowseType, string> = {
   image: 'Image',
@@ -35,21 +35,35 @@ const TYPE_DISPLAY: Record<BrowseType, string> = {
 
 const assetUrl = (asset: DamAsset, alias: string) => buildUrl({ alias, path: asset.path });
 
-/** Thumbnail URL per type (null for views/models, which have no static thumbnail). */
-function thumbUrl(asset: DamAsset, alias: string): string | null {
+/** The my.sirv.com file-manager deep link for an asset (matches the other Sirv plugins). */
+function manageUrl(asset: DamAsset): string {
+  const dir = asset.path.slice(0, asset.path.lastIndexOf('/')) || '/';
+  return `https://my.sirv.com/#/browse${dir}?preview=${encodeURIComponent(asset.path)}`;
+}
+
+/**
+ * A static thumbnail per type. Spins use a rendered frame; views append `?thumb`; videos and
+ * 3D models append `?thumbnail=<size>`. Returns null for generic files (icon fallback).
+ */
+function thumbUrl(asset: DamAsset, alias: string, size = THUMB): string | null {
   if (!alias) return null;
   const input = { alias, path: asset.path };
   switch (asset.type) {
     case 'image':
-      return buildUrl(input, { width: THUMB, height: THUMB, scale: 'fit', format: 'optimal' });
+      return buildUrl(input, { width: size, height: size, scale: 'fit', format: 'optimal' });
     case 'video':
-      return buildUrl(input, { extras: { thumbnail: THUMB } });
+    case 'model':
+      return `${buildUrl(input)}?thumbnail=${size}`;
     case 'spin':
-      return buildUrl(input, { width: THUMB, height: THUMB, extras: { image: 24 } });
+      return buildUrl(input, { width: size, height: size, extras: { image: 24 } });
+    case 'view':
+      return `${buildUrl(input)}?thumb`;
     default:
       return null;
   }
 }
+
+const ICON_STYLE: React.CSSProperties = { width: '3rem', height: '3rem' };
 
 function Breadcrumb({ path, onNavigate }: { path: string; onNavigate: (p: string) => void }) {
   const segs = path.split('/').filter(Boolean);
@@ -62,15 +76,25 @@ function Breadcrumb({ path, onNavigate }: { path: string; onNavigate: (p: string
         const last = i === crumbs.length - 1;
         return (
           <Flex key={c.path} alignItems="center" gap={1}>
-            <Button
+            <button
               type="button"
-              variant="tertiary"
+              onClick={() => !last && onNavigate(c.path)}
               disabled={last}
-              startIcon={i === 0 ? <House /> : undefined}
-              onClick={() => onNavigate(c.path)}
+              style={{
+                border: 'none',
+                background: 'transparent',
+                cursor: last ? 'default' : 'pointer',
+                padding: i === 0 ? 0 : '0 4px',
+                color: last ? 'inherit' : '#4945ff',
+                font: 'inherit',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+              }}
             >
+              {i === 0 ? <House aria-hidden /> : null}
               {i === 0 ? 'Home' : c.name}
-            </Button>
+            </button>
             {last ? null : (
               <Typography variant="pi" textColor="neutral400">
                 /
@@ -83,7 +107,8 @@ function Breadcrumb({ path, onNavigate }: { path: string; onNavigate: (p: string
   );
 }
 
-const cardStyle: React.CSSProperties = { cursor: 'pointer', textAlign: 'center' };
+const cardStyle: React.CSSProperties = { cursor: 'pointer', textAlign: 'center', color: '#fff' };
+const cardLabel: React.CSSProperties = { color: '#fff' };
 
 function FolderCard({ folder, onOpen }: { folder: DamFolder; onOpen: () => void }) {
   return (
@@ -98,10 +123,12 @@ function FolderCard({ folder, onOpen }: { folder: DamFolder; onOpen: () => void 
       style={cardStyle}
     >
       <Flex direction="column" alignItems="center" gap={2}>
-        <Box style={{ height: 72, display: 'flex', alignItems: 'center', fontSize: '2.5rem' }}>
-          <Folder />
+        <Box
+          style={{ height: 88, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <Folder style={ICON_STYLE} aria-hidden />
         </Box>
-        <Typography variant="pi" ellipsis title={folder.name}>
+        <Typography variant="pi" ellipsis title={folder.name} style={cardLabel}>
           {folder.name}
         </Typography>
       </Flex>
@@ -131,7 +158,6 @@ function AssetCard({
         <Flex
           alignItems="center"
           justifyContent="center"
-          background="neutral100"
           hasRadius
           style={{ height: 120, overflow: 'hidden' }}
         >
@@ -143,16 +169,14 @@ function AssetCard({
               style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
             />
           ) : asset.type === 'file' ? (
-            <Box style={{ fontSize: '1.6rem' }}>
-              <FileIcon />
-            </Box>
+            <FileIcon style={ICON_STYLE} aria-hidden />
           ) : (
-            <Typography variant="pi" textColor="neutral500">
+            <Typography variant="pi" style={cardLabel}>
               {TYPE_DISPLAY[asset.type]}
             </Typography>
           )}
         </Flex>
-        <Typography variant="pi" ellipsis title={asset.name}>
+        <Typography variant="pi" ellipsis title={asset.name} style={cardLabel}>
           {asset.name}
         </Typography>
       </Flex>
@@ -171,41 +195,41 @@ function Preview({
   onConfirm: (a: DamAsset) => void;
   onBack: () => void;
 }) {
+  const [thumbFailed, setThumbFailed] = useState(false);
   const url = assetUrl(asset, alias);
-  const interactive = asset.type === 'spin' || asset.type === 'view' || asset.type === 'model';
+  const still = thumbUrl(asset, alias, 640);
+  const isImage = asset.type === 'image';
+  const isVideo = asset.type === 'video';
   const imageSrc =
-    asset.type === 'image' && alias
+    isImage && alias
       ? buildUrl({ alias, path: asset.path }, { width: 640, format: 'optimal' })
       : null;
-  const stillSrc = alias
-    ? buildUrl({ alias, path: asset.path }, { width: 640, extras: { image: 24 } })
-    : undefined;
-  const videoPoster = alias
-    ? buildUrl({ alias, path: asset.path }, { extras: { thumbnail: 640 } })
-    : undefined;
 
   return (
     <Flex direction="column" alignItems="stretch" gap={4}>
       <Flex
         alignItems="center"
         justifyContent="center"
-        background="neutral100"
-        hasRadius
         style={{ minHeight: 280, overflow: 'hidden' }}
       >
-        {asset.type === 'video' ? (
+        {isVideo ? (
           // biome-ignore lint/a11y/useMediaCaption: source assets have no caption track
           <video
             src={url}
-            poster={videoPoster}
+            poster={still ?? undefined}
             controls
             preload="metadata"
             style={{ maxWidth: '100%', maxHeight: 420, background: '#000' }}
           />
         ) : imageSrc ? (
           <img src={imageSrc} alt={asset.name} style={{ maxWidth: '100%', maxHeight: 420 }} />
-        ) : interactive && stillSrc ? (
-          <img src={stillSrc} alt={asset.name} style={{ maxWidth: '100%', maxHeight: 420 }} />
+        ) : still && !thumbFailed ? (
+          <img
+            src={still}
+            alt={asset.name}
+            onError={() => setThumbFailed(true)}
+            style={{ maxWidth: '100%', maxHeight: 420 }}
+          />
         ) : (
           <Typography textColor="neutral500">{TYPE_DISPLAY[asset.type]}</Typography>
         )}
@@ -216,8 +240,15 @@ function Preview({
         <Typography variant="pi" textColor="neutral600">
           {TYPE_DISPLAY[asset.type]}
           {asset.width && asset.height ? ` - ${asset.width}x${asset.height}` : ''}
-          {interactive ? ' - interactive on your site via @sirv/react' : ''}
         </Typography>
+        <Flex gap={4} paddingTop={1} wrap="wrap">
+          <Link href={url} isExternal>
+            Open original
+          </Link>
+          <Link href={manageUrl(asset)} isExternal>
+            Open in Sirv
+          </Link>
+        </Flex>
       </Flex>
 
       <Flex justifyContent="space-between" gap={2}>
@@ -308,8 +339,8 @@ export function SirvDamBrowser({ client, alias, allowedTypes, onSelect }: SirvDa
       <Box
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-          gap: '1rem',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+          gap: '0.75rem',
         }}
       >
         {folders.map((f) => (
@@ -358,7 +389,7 @@ function TextInputSearch({ value, onChange }: { value: string; onChange: (v: str
       borderColor="neutral200"
       style={{ height: 40 }}
     >
-      <Search />
+      <Search aria-hidden />
       <input
         placeholder="Search this account..."
         value={value}

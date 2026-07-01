@@ -10,6 +10,8 @@ import { type SirvFieldValue, describeFieldValue } from './value';
 
 interface SirvMediaInputProps {
   name: string;
+  /** Field label supplied by the content-manager (the attribute's display name). */
+  label?: string;
   value?: string | null;
   onChange: (event: { target: { name: string; value: unknown; type?: string } }) => void;
   attribute?: { type?: string; options?: { allowedTypes?: BrowseType[] } };
@@ -18,6 +20,16 @@ interface SirvMediaInputProps {
   error?: string;
   hint?: string;
   intlLabel?: { id: string; defaultMessage: string };
+}
+
+/** Turns an attribute path like `anyMedia` / `hero.image` into a readable label ("Any media"). */
+function humanizeName(name: string): string {
+  const seg = name.split('.').pop() ?? name;
+  const spaced = seg
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ')
+    .trim();
+  return spaced ? spaced.charAt(0).toUpperCase() + spaced.slice(1) : 'Sirv media';
 }
 
 /** Best-effort parse of the stored value (arrives as a JSON string for `type: 'json'`). */
@@ -43,6 +55,8 @@ function previewThumb(value: SirvFieldValue): string | null {
       return buildUrl(input, { extras: { thumbnail: 160 } });
     case 'sirv.spin':
       return buildUrl(input, { width: 160, height: 160, extras: { image: 24 } });
+    case 'sirv.view':
+      return `${buildUrl(input)}?thumb`;
     default:
       return null;
   }
@@ -53,15 +67,25 @@ function previewThumb(value: SirvFieldValue): string | null {
  * a preview with Change / Remove. The picked `SirvFieldValue` is stored as JSON.
  */
 const SirvMediaInput = forwardRef<HTMLButtonElement, SirvMediaInputProps>((props, ref) => {
-  const { name, value, onChange, attribute, disabled, required, error, hint, intlLabel } = props;
+  const {
+    name,
+    label: labelProp,
+    value,
+    onChange,
+    attribute,
+    disabled,
+    required,
+    error,
+    hint,
+    intlLabel,
+  } = props;
   const { formatMessage } = useIntl();
   const [open, setOpen] = useState(false);
 
   const current = parseValue(value);
   const allowedTypes = attribute?.options?.allowedTypes;
-  const label = intlLabel
-    ? formatMessage(intlLabel)
-    : formatMessage({ id: getTranslation('sirv-media.label'), defaultMessage: 'Sirv media' });
+  // Prefer the field's real label; fall back to a humanized attribute name (not "Sirv media").
+  const label = labelProp ?? (intlLabel ? formatMessage(intlLabel) : humanizeName(name));
 
   const emit = (next: SirvFieldValue | null) => {
     onChange({

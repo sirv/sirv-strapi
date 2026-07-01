@@ -76,6 +76,46 @@ export function damAssetToFieldValue(asset: DamAsset, alias: string): SirvFieldV
   }
 }
 
+/**
+ * Best-effort fetch of an asset's title/description from Sirv's public `?info` delivery endpoint
+ * (CORS-open, no auth). Never throws.
+ */
+export async function fetchSirvInfo(
+  originalUrl: string,
+): Promise<{ title?: string; description?: string }> {
+  try {
+    const res = await fetch(`${originalUrl}?info`);
+    if (!res.ok) return {};
+    const data = (await res.json()) as { original?: { title?: unknown; description?: unknown } };
+    const original = data.original ?? {};
+    const title = typeof original.title === 'string' && original.title ? original.title : undefined;
+    const description =
+      typeof original.description === 'string' && original.description
+        ? original.description
+        : undefined;
+    return { title, description };
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Enriches a freshly-picked value with the asset's Sirv metadata: `original.title` -> alt (images)
+ * and `original.description` -> caption. Only sets fields that are non-empty.
+ */
+export async function enrichFieldValue(value: SirvFieldValue): Promise<SirvFieldValue> {
+  const { title, description } = await fetchSirvInfo(value.asset.originalUrl);
+  if (!title && !description) return value;
+  if (value._type === 'sirv.image') {
+    return {
+      ...value,
+      ...(title ? { alt: title } : {}),
+      ...(description ? { caption: description } : {}),
+    };
+  }
+  return { ...value, ...(description ? { caption: description } : {}) };
+}
+
 /** Short human label for a stored value (used in the field preview). */
 export function describeFieldValue(value: SirvFieldValue): string {
   const name = value.asset.sirvPath.split('/').pop() ?? value.asset.sirvPath;
