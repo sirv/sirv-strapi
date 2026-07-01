@@ -107,8 +107,39 @@ server bundle stays UI-free).
   and the paste-REST-credentials fallback, plus the connected view with disconnect - all in the
   Settings page. Verified in a real browser: login-form errors surface, the connected view shows
   the account, and disconnect returns to the form.
-- Milestones 5-9: the `sirv-media` field picker, DAM browser, settings polish (usage / default
-  transformations), dedicated DAM page, examples.
+- Milestones 5, 6, 8 (this change): the `sirv-media` field picker + DAM browser + type filters +
+  dedicated DAM page. Verified end-to-end in a real browser against the live account: picking an
+  image in the content editor stored a valid `SirvFieldValue` and rendered a thumbnail preview.
+- Milestones 7, 9: settings polish (usage / default transformations), examples (Next.js).
+
+### DAM browser + field picker (milestones 5/6/8)
+
+The server DAM endpoints are a **thin authenticated proxy** returning RAW Sirv responses; the
+admin does the normalization/classification/pagination client-side via the `@sirv/core` hooks
+(`useFolders`, `useSearch`, `useTypeFilter`). This lets the browser logic be reused unchanged.
+
+- `admin/src/api/proxy-client.ts` - a `SirvClient`-shaped adapter that routes every call through
+  `/sirv/dam/*` instead of talking to Sirv directly (so credentials stay server-side).
+- `admin/src/components/SirvDamBrowser.tsx` - the Strapi Design System DAM browser (folders,
+  search, type-filter chips, thumbnail grid, preview/confirm), driven by the proxy client.
+- `admin/src/components/DamBrowserModal.tsx` - wraps the browser in a Strapi `Modal`; resolves the
+  delivery host, converts the picked `DamAsset` to a `SirvFieldValue`.
+- `custom-fields/sirv-media/SirvMediaInput.tsx` - empty -> "Pick from Sirv"; filled -> preview
+  with Change/Remove. Stores the value as JSON.
+- `pages/HomePage.tsx` - the dedicated sidebar DAM page mounts the same browser, browse-only.
+
+Stored value: the `SirvFieldValue` union (`_type: 'sirv.image' | ...`, `asset.{sirvAlias,
+sirvPath, width?, height?, ...}`). This is exactly the shape `@sirv/react` consumes as
+`SirvMediaLike`, so a frontend renders it directly with `<SirvMedia value={stored} />` - no
+converter needed (the Sanity plugin stores a flat shape and needs `fromSanityMedia`).
+
+### Host CSP requirement
+
+Strapi's admin sets a strict Content-Security-Policy. Sirv assets are delivered from `*.sirv.com`
+(or a custom domain), so the host app must extend `strapi::security` to allow `img-src` /
+`media-src` (and `script-src` for sirv.js) from those hosts, or thumbnails/previews are blocked.
+The example app does this in `examples/strapi/config/middlewares.ts`; the plugin README documents
+it for consumers.
 
 ### Admin connect flow (milestone 4)
 

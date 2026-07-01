@@ -27,11 +27,11 @@ export default {
       },
       { method: 'POST', path: '/auth/logout', handler: 'auth.logout', config: adminAuth },
 
-      // DAM
+      // DAM (thin raw proxy; the admin's @sirv/core hooks normalize client-side)
       { method: 'GET', path: '/dam/folder', handler: 'dam.folder', config: adminAuth },
       { method: 'GET', path: '/dam/search', handler: 'dam.search', config: adminAuth },
       { method: 'GET', path: '/dam/file', handler: 'dam.file', config: adminAuth },
-      { method: 'GET', path: '/dam/thumb', handler: 'dam.thumb', config: adminAuth },
+      { method: 'GET', path: '/dam/account', handler: 'dam.account', config: adminAuth },
 
       // Settings + usage
       { method: 'GET', path: '/settings', handler: 'settings.find', config: adminAuth },
