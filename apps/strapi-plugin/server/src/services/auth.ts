@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import {
   type AccountWithToken,
   type LoginParams,
+  SirvApiError,
   type StoredCredentials,
   getRestCredentials,
   isConnectableRole,
@@ -160,14 +161,20 @@ const service = ({ strapi }: { strapi: Core.Strapi }) => {
       accountAlias?: string;
     }): Promise<ConnectedAccount> {
       const fallback = input.accountAlias ?? '';
-      const accountAlias = await validateAndGetAlias(
-        ctx,
-        input.clientId,
-        input.clientSecret,
-        fallback,
-      );
+      let accountAlias: string;
+      try {
+        accountAlias = await validateAndGetAlias(ctx, input.clientId, input.clientSecret, fallback);
+      } catch (err) {
+        // A bad Client ID / secret fails token minting with 401/403.
+        if (err instanceof SirvApiError && (err.status === 401 || err.status === 403)) {
+          throw new InvalidRequestError(
+            'Wrong credentials. Please check your Client ID and secret.',
+          );
+        }
+        throw err;
+      }
       if (!accountAlias) {
-        throw new InvalidRequestError('Could not validate the provided Sirv credentials.');
+        throw new InvalidRequestError('Wrong credentials. Please check your Client ID and secret.');
       }
       const stored: StoredCredentials = {
         clientId: input.clientId,

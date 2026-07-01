@@ -1,17 +1,19 @@
-import { Box, Button, Field, Flex, TextInput, Typography } from '@strapi/design-system';
+import { Box, Button, Field, Flex, Link, TextInput, Typography } from '@strapi/design-system';
 import { type FormEvent, useState } from 'react';
 
 export interface CredentialsFormProps {
   onSubmit: (clientId: string, clientSecret: string, accountAlias?: string) => void;
-  onUseLogin: () => void;
+  /** When provided, shows a "use email and password instead" toggle (currently disabled). */
+  onUseLogin?: () => void;
   busy: boolean;
   error?: string;
 }
 
+const API_SETTINGS_URL = 'https://my.sirv.com/#/account/settings/api';
+
 /**
- * Connect by pasting a per-account REST clientId/secret (fallback / self-hosted path). The
- * values are POSTed straight to the server, validated against Sirv, and stored encrypted - they
- * are never persisted client-side.
+ * Connect by pasting a per-account REST clientId/secret. The values are POSTed straight to the
+ * server, validated against Sirv, and stored encrypted - never persisted client-side.
  */
 export const CredentialsForm = ({ onSubmit, onUseLogin, busy, error }: CredentialsFormProps) => {
   const [clientId, setClientId] = useState('');
@@ -25,15 +27,23 @@ export const CredentialsForm = ({ onSubmit, onUseLogin, busy, error }: Credentia
   return (
     <Box tag="form" onSubmit={submit}>
       <Flex direction="column" alignItems="stretch" gap={4}>
-        <Field.Root name="clientId" required hint="From my.sirv.com -> Settings -> API">
+        <Field.Root name="clientId" required>
           <Field.Label>Client ID</Field.Label>
           <TextInput
             name="clientId"
             value={clientId}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setClientId(e.target.value)}
           />
-          <Field.Hint />
+          <Box paddingTop={1}>
+            <Typography variant="pi" textColor="neutral600">
+              Create or find your REST API keys at{' '}
+              <Link href={API_SETTINGS_URL} isExternal>
+                my.sirv.com &rarr; Settings &rarr; API
+              </Link>
+            </Typography>
+          </Box>
         </Field.Root>
+
         <Field.Root name="clientSecret" required>
           <Field.Label>Client secret</Field.Label>
           <TextInput
@@ -54,9 +64,11 @@ export const CredentialsForm = ({ onSubmit, onUseLogin, busy, error }: Credentia
           <Button type="submit" loading={busy} disabled={!clientId || !clientSecret}>
             Connect
           </Button>
-          <Button type="button" variant="tertiary" onClick={onUseLogin}>
-            Use email and password instead
-          </Button>
+          {onUseLogin ? (
+            <Button type="button" variant="tertiary" onClick={onUseLogin}>
+              Use email and password instead
+            </Button>
+          ) : null}
         </Flex>
       </Flex>
     </Box>

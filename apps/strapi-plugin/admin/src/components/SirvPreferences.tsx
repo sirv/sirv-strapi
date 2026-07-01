@@ -4,7 +4,6 @@ import {
   Field,
   Flex,
   Grid,
-  NumberInput,
   SingleSelect,
   SingleSelectOption,
   Typography,
@@ -15,6 +14,20 @@ import { type SirvDefaults, type UsageSummary, createSirvApi } from '../api/sirv
 
 const GB = 1024 ** 3;
 const fmtGB = (bytes: number) => `${(bytes / GB).toFixed(2)} GB`;
+
+const QUALITY_LABELS: Record<number, string> = {
+  100: 'Extreme quality (huge filesize)',
+  90: 'Very high quality',
+  80: 'High quality (Sirv recommended default)',
+  65: 'Medium quality',
+  40: 'Low quality',
+  20: 'Very low quality',
+};
+const QUALITY_OPTIONS = Array.from({ length: 100 }, (_, i) => {
+  const q = 100 - i;
+  const note = QUALITY_LABELS[q] ? ` - ${QUALITY_LABELS[q]}` : '';
+  return { value: String(q), label: `${q}%${note}` };
+});
 
 const FORMAT_OPTIONS: Array<{ value: NonNullable<SirvDefaults['format']>; label: string }> = [
   { value: 'optimal', label: 'Optimal (AVIF/WebP)' },
@@ -123,14 +136,19 @@ export const SirvPreferences = () => {
 
           <Grid.Root gap={4}>
             <Grid.Item col={6} s={12} direction="column" alignItems="stretch">
-              <Field.Root name="quality" hint="1-100">
+              <Field.Root name="quality">
                 <Field.Label>Image quality</Field.Label>
-                <NumberInput
-                  name="quality"
-                  value={quality}
-                  onValueChange={(v: number | undefined) => setQuality(v)}
-                />
-                <Field.Hint />
+                <SingleSelect
+                  value={typeof quality === 'number' ? String(quality) : ''}
+                  onChange={(v: string | number) => setQuality(v === '' ? undefined : Number(v))}
+                  placeholder="Sirv default"
+                >
+                  {QUALITY_OPTIONS.map((o) => (
+                    <SingleSelectOption key={o.value} value={o.value}>
+                      {o.label}
+                    </SingleSelectOption>
+                  ))}
+                </SingleSelect>
               </Field.Root>
             </Grid.Item>
             <Grid.Item col={6} s={12} direction="column" alignItems="stretch">
