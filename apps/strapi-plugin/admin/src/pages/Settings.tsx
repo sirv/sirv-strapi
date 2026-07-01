@@ -1,6 +1,7 @@
 import { Box, Flex, Main, Typography } from '@strapi/design-system';
 import { useState } from 'react';
 import { useIntl } from 'react-intl';
+import { SirvHelp } from '../components/SirvHelp';
 import { SirvPreferences } from '../components/SirvPreferences';
 import { ConnectPanel } from '../components/connect/ConnectPanel';
 import { getTranslation } from '../getTranslation';
@@ -43,6 +44,8 @@ const SettingsPage = () => {
           </Box>
 
           <SirvPreferences key={rev} />
+
+          <SirvHelp />
         </Flex>
       </Box>
     </Main>
