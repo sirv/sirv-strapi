@@ -35,7 +35,6 @@ export default {
 
       // Settings + usage
       { method: 'GET', path: '/settings', handler: 'settings.find', config: adminAuth },
-      { method: 'POST', path: '/settings', handler: 'settings.update', config: adminAuth },
       { method: 'GET', path: '/usage', handler: 'dam.usage', config: adminAuth },
     ],
   },

@@ -3,19 +3,14 @@ import plugin from './index';
 import { PLUGIN_ID } from './pluginId';
 
 describe('admin plugin entry', () => {
-  it('registers the sidebar link, custom field, settings section and plugin', () => {
+  it('registers the custom field, settings section and plugin', () => {
     const app = {
-      addMenuLink: vi.fn(),
       customFields: { register: vi.fn() },
       createSettingSection: vi.fn(),
       registerPlugin: vi.fn(),
     };
 
     plugin.register(app as any);
-
-    // Sidebar entry -> /plugins/sirv
-    expect(app.addMenuLink).toHaveBeenCalledTimes(1);
-    expect(app.addMenuLink.mock.calls[0]?.[0]).toMatchObject({ to: `plugins/${PLUGIN_ID}` });
 
     // Custom field plugin::sirv.sirv-media
     expect(app.customFields.register).toHaveBeenCalledTimes(1);
@@ -38,6 +33,6 @@ describe('admin plugin entry', () => {
     const trads = await plugin.registerTrads({ locales: ['en'] });
     expect(trads).toHaveLength(1);
     expect(trads[0]?.locale).toBe('en');
-    expect(trads[0]?.data).toHaveProperty('sirv.menu.label');
+    expect(trads[0]?.data).toHaveProperty('sirv.settings.title');
   });
 });
