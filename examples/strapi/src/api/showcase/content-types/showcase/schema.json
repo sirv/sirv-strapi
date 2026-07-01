@@ -1,0 +1,44 @@
+{
+  "kind": "collectionType",
+  "collectionName": "showcases",
+  "info": {
+    "singularName": "showcase",
+    "pluralName": "showcases",
+    "displayName": "Sirv Showcase",
+    "description": "Every Sirv media field variant, for demoing the picker and @sirv/react rendering."
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "image": {
+      "type": "customField",
+      "customField": "plugin::sirv.sirv-media",
+      "options": { "allowedTypes": ["image"] }
+    },
+    "video": {
+      "type": "customField",
+      "customField": "plugin::sirv.sirv-media",
+      "options": { "allowedTypes": ["video"] }
+    },
+    "spin": {
+      "type": "customField",
+      "customField": "plugin::sirv.sirv-media",
+      "options": { "allowedTypes": ["spin"] }
+    },
+    "viewer": {
+      "type": "customField",
+      "customField": "plugin::sirv.sirv-media",
+      "options": { "allowedTypes": ["view"] }
+    },
+    "anyMedia": {
+      "type": "customField",
+      "customField": "plugin::sirv.sirv-media",
+      "options": { "allowedTypes": ["image", "video", "spin", "view"] }
+    }
+  }
+}
