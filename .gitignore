@@ -38,7 +38,7 @@ coverage/
 .strapi/
 .strapi-updater.json
 exports/
-types/generated/
+**/types/generated/
 
 # pnpm
 pnpm-debug.log*

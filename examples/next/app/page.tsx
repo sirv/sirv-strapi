@@ -8,6 +8,7 @@ interface Showcase {
   spin?: unknown;
   viewer?: unknown;
   anyMedia?: unknown;
+  gallery?: unknown[];
 }
 
 async function getShowcase(): Promise<Showcase | null> {

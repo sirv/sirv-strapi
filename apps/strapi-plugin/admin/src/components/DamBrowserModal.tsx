@@ -15,10 +15,13 @@ export interface DamBrowserModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   allowedTypes?: BrowseType[];
-  onPicked: (value: SirvFieldValue) => void;
+  /** Single-select pick. */
+  onPicked?: (value: SirvFieldValue) => void;
+  /** Multi-select: when set, the browser runs in multiple mode and returns all picks at once. */
+  multiple?: boolean;
+  onPickedMany?: (values: SirvFieldValue[]) => void;
 }
 
-/** Resolve the delivery host (for thumbnails / URLs) from account info. */
 function deliveryHost(info: AccountInfo): string {
   if (info.cdnURL) return info.cdnURL;
   return info.alias.includes('.') ? info.alias : `${info.alias}.sirv.com`;
@@ -26,14 +29,16 @@ function deliveryHost(info: AccountInfo): string {
 
 /**
  * The DAM browser in a Strapi modal. Builds a proxy `SirvClient` (routes through `/sirv/*`),
- * resolves the account delivery host, and renders `SirvDamBrowser`. On confirm, converts the
- * picked `DamAsset` into a `SirvFieldValue` and hands it back.
+ * resolves the delivery host, and renders `SirvDamBrowser`. Picked `DamAsset`s are converted to
+ * `SirvFieldValue`s (enriched with the asset's Sirv title/description) before being handed back.
  */
 export const DamBrowserModal = ({
   open,
   onOpenChange,
   allowedTypes,
   onPicked,
+  multiple,
+  onPickedMany,
 }: DamBrowserModalProps) => {
   const fetchClient = useFetchClient();
   const client: SirvClient = useMemo(
@@ -45,7 +50,6 @@ export const DamBrowserModal = ({
   const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState<string>();
 
-  // Resolve the delivery host once the modal opens (also acts as a connection check).
   useEffect(() => {
     if (!open || status !== 'idle') return;
     setStatus('loading');
@@ -63,9 +67,17 @@ export const DamBrowserModal = ({
 
   const handleSelect = async (asset: DamAsset) => {
     if (!alias) return;
-    // Enrich with the asset's Sirv title/description (alt/caption) before storing.
     const value = await enrichFieldValue(damAssetToFieldValue(asset, alias));
-    onPicked(value);
+    onPicked?.(value);
+    onOpenChange(false);
+  };
+
+  const handleSelectMany = async (assets: DamAsset[]) => {
+    if (!alias) return;
+    const values = await Promise.all(
+      assets.map((a) => enrichFieldValue(damAssetToFieldValue(a, alias))),
+    );
+    onPickedMany?.(values);
     onOpenChange(false);
   };
 
@@ -83,6 +95,8 @@ export const DamBrowserModal = ({
                 alias={alias}
                 allowedTypes={allowedTypes}
                 onSelect={handleSelect}
+                multiple={multiple}
+                onSelectMany={handleSelectMany}
               />
             ) : status === 'error' ? (
               <Flex justifyContent="center" padding={8}>
