@@ -210,19 +210,28 @@ const SirvMediaInput = forwardRef<HTMLButtonElement, SirvMediaInputProps>((props
       <Field.Label>{label}</Field.Label>
       {current ? (
         <Flex
-          alignItems="center"
-          gap={4}
+          direction="column"
+          alignItems="stretch"
+          gap={3}
           padding={3}
           hasRadius
           background="neutral0"
           borderColor="neutral200"
         >
-          <Thumb value={current} />
-          <Flex direction="column" alignItems="flex-start" gap={1} flex={1} style={{ minWidth: 0 }}>
-            <Typography ellipsis>{describeFieldValue(current)}</Typography>
-            <Typography variant="pi" textColor="neutral600" ellipsis>
-              {current.asset.sirvPath}
-            </Typography>
+          <Flex alignItems="center" gap={4}>
+            <Thumb value={current} />
+            <Flex
+              direction="column"
+              alignItems="flex-start"
+              gap={1}
+              flex={1}
+              style={{ minWidth: 0 }}
+            >
+              <Typography ellipsis>{describeFieldValue(current)}</Typography>
+              <Typography variant="pi" textColor="neutral600" ellipsis>
+                {current.asset.sirvPath}
+              </Typography>
+            </Flex>
           </Flex>
           <Flex gap={2}>
             <Button
