@@ -39,6 +39,26 @@ async function seedAdmin(strapi: any) {
   }
 }
 
+/**
+ * Demo convenience: if SIRV_CLIENT_ID + SIRV_CLIENT_SECRET are set and no account is connected,
+ * connect Sirv on boot so a hosted demo comes up ready to browse. No-op otherwise.
+ */
+async function autoConnectSirv(strapi: any) {
+  const clientId = process.env.SIRV_CLIENT_ID;
+  const clientSecret = process.env.SIRV_CLIENT_SECRET;
+  if (!clientId || !clientSecret) return;
+
+  try {
+    const sirv = strapi.plugin('sirv');
+    const status = await sirv.service('sirv-client').getStatus();
+    if (status.connected) return;
+    await sirv.service('auth').connectWithCredentials({ clientId, clientSecret });
+    strapi.log.info('[sirv-example] auto-connected Sirv from env');
+  } catch (err) {
+    strapi.log.warn(`[sirv-example] Sirv auto-connect skipped: ${(err as Error).message}`);
+  }
+}
+
 /** Grant the public role read access to the demo content types (so examples/next needs no token). */
 async function grantPublicRead(strapi: any) {
   const publicRole = await strapi
@@ -63,6 +83,7 @@ export default {
 
   async bootstrap({ strapi }: { strapi: any }) {
     await seedAdmin(strapi);
+    await autoConnectSirv(strapi);
     await grantPublicRead(strapi);
   },
 };

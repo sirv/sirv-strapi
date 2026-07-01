@@ -1,0 +1,14 @@
+**/node_modules
+**/dist
+**/build
+**/.next
+**/.tmp
+**/.strapi
+**/.cache
+**/.git
+**/.env
+**/.env.*
+!**/.env.example
+**/types/generated
+.tarballs
+*.log

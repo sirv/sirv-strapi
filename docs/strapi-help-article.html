@@ -1,0 +1,192 @@
+<p><img decoding="async" style="margin-left: 50; margin-bottom: 20;" src="https://sirv.sirv.com/website/strapi-logo.svg?w=230" style="width:230px" align="right" alt="Strapi logo"/>Add Sirv as a first-class media source inside <a href="https://strapi.io/" target="_blank" rel="noopener noreferrer">Strapi</a>, the leading open-source headless CMS.</p>
+<p>Editors browse, search and pick images, videos, 360 spins and Sirv Media Viewers straight from your connected Sirv account, without leaving Strapi. Your files stay on Sirv and are delivered from Sirv's fast, global CDN, then rendered on your frontend with the companion <span class="code-inline">@sirv/react</span> package.</p>
+<p>Because assets live on Sirv, you get automatic image optimization, responsive images, dynamic resizing, 360 spins and zoom, all without bloating your Strapi database.</p>
+
+<h2 id="requirements">Requirements <a class="toc-anchor" href="#requirements"></a></h2>
+<ul class="mainlist">
+<li>Strapi <strong>v5</strong> (5.x)</li>
+<li>Node.js <strong>18 or newer</strong></li>
+<li>A Sirv account. <a href="https://my.sirv.com/#/signup" target="_blank" rel="noopener noreferrer">Create one for free</a> if you don't have one.</li>
+</ul>
+
+<h2 id="installation">Installation <a class="toc-anchor" href="#installation"></a></h2>
+<p><strong>1. </strong>Install the plugin in your Strapi project:</p>
+<pre class="prettyprint lang-bash">npm install @sirv/strapi-plugin</pre>
+<p><strong>2. </strong>Enable it in <span class="code-inline">config/plugins.ts</span> (or <span class="code-inline">config/plugins.js</span>):</p>
+<pre class="prettyprint lang-js">export default {
+  sirv: {
+    enabled: true,
+  },
+};</pre>
+<p><strong>3. </strong>Strapi's admin panel uses a strict Content-Security-Policy that blocks external images. Since Sirv delivers assets from <span class="code-inline">*.sirv.com</span>, allow it in <span class="code-inline">config/middlewares.ts</span>, otherwise thumbnails and previews won't load:</p>
+<pre class="prettyprint lang-js">export default [
+  'strapi::logger',
+  'strapi::errors',
+  {
+    name: 'strapi::security',
+    config: {
+      contentSecurityPolicy: {
+        useDefaults: true,
+        directives: {
+          'img-src': ["'self'", 'data:', 'blob:', 'https://*.sirv.com'],
+          'media-src': ["'self'", 'data:', 'blob:', 'https://*.sirv.com'],
+          'script-src': ["'self'", 'blob:', 'https://scripts.sirv.com'],
+        },
+      },
+    },
+  },
+  'strapi::cors',
+  'strapi::poweredBy',
+  'strapi::query',
+  'strapi::body',
+  'strapi::session',
+  'strapi::favicon',
+  'strapi::public',
+];</pre>
+<p><strong>4. </strong>Rebuild and start Strapi:</p>
+<pre class="prettyprint lang-bash">npm run develop</pre>
+<p>A <strong>Sirv</strong> section now appears under <span class="code-inline">Settings</span> in the admin panel.</p>
+
+<h3 id="free-trial">Free trial <a class="toc-anchor" href="#free-trial"></a></h3>
+<p>If you don't have a Sirv account yet, <a href="https://my.sirv.com/#/signup" target="_blank" rel="noopener noreferrer">create one for free</a>. You start on a free trial and can <a href="https://sirv.com/pricing/" target="_blank" rel="noopener noreferrer">choose a free or paid plan</a> later.</p>
+
+<h2 id="connect-your-account">Connect your Sirv account <a class="toc-anchor" href="#connect-your-account"></a></h2>
+<p><strong>1. </strong>In the Strapi admin, open <span class="code-inline">Settings &rarr; Sirv &rarr; Configuration</span>.</p>
+<p><strong>2. </strong>Enter your Sirv REST API <strong>Client ID</strong> and <strong>Client secret</strong>. You'll find (or create) them in your Sirv account at <a href="https://my.sirv.com/#/account/settings/api" target="_blank" rel="noopener noreferrer">Settings &rarr; API</a>.</p>
+<div class="Sirv" data-options="fullscreen.always:true" style="margin-bottom:30px">
+<img class="Sirv" data-src="https://sirv.sirv.com/website/screenshots/strapi/01-account-connection.png?profile=screenshots-grey-border" alt="Connect your Sirv account with Client ID and secret">
+</div>
+<p><strong>3. </strong>Click <strong>Connect</strong>. Your credentials are validated against Sirv, then stored <strong>encrypted</strong> on the Strapi server. They are never exposed to the browser.</p>
+<p>Once connected, the page shows your account and its storage usage. You can disconnect at any time.</p>
+<div class="Sirv" data-options="fullscreen.always:true" style="margin-bottom:30px">
+<img class="Sirv" data-src="https://sirv.sirv.com/website/screenshots/strapi/02-settings.png?profile=screenshots-grey-border" alt="Sirv settings page showing the connected account and usage">
+</div>
+
+<h2 id="add-the-sirv-media-field">Add the Sirv media field <a class="toc-anchor" href="#add-the-sirv-media-field"></a></h2>
+<p>The plugin adds a custom field, <span class="code-inline">Sirv media</span>, that you can add to any content type.</p>
+<p><strong>1. </strong>In the <strong>Content-Type Builder</strong>, edit a content type, click <strong>Add another field</strong>, choose <strong>Custom</strong>, then <strong>Sirv media</strong>.</p>
+<p><strong>2. </strong>Or declare it directly in the content type's <span class="code-inline">schema.json</span>. Use <span class="code-inline">allowedTypes</span> to restrict what can be picked, and <span class="code-inline">multiple</span> for a gallery:</p>
+<pre class="prettyprint lang-json">{
+  "attributes": {
+    "hero": {
+      "type": "customField",
+      "customField": "plugin::sirv.sirv-media",
+      "options": { "allowedTypes": ["image", "video"] }
+    },
+    "gallery": {
+      "type": "customField",
+      "customField": "plugin::sirv.sirv-media",
+      "options": { "allowedTypes": ["image", "video", "spin", "view"], "multiple": true }
+    }
+  }
+}</pre>
+<p>Supported asset types are <strong>image</strong>, <strong>video</strong>, <strong>360 spin</strong> and <strong>Sirv Media Viewer</strong>.</p>
+
+<h2 id="pick-an-asset">Pick an asset <a class="toc-anchor" href="#pick-an-asset"></a></h2>
+<p>When editing content, a <span class="code-inline">Sirv media</span> field shows a <strong>Pick from Sirv</strong> button. Click it to open the DAM browser: navigate folders, search your account, and filter by type.</p>
+<div class="Sirv" data-options="fullscreen.always:true" style="margin-bottom:30px">
+<img class="Sirv" data-src="https://sirv.sirv.com/website/screenshots/strapi/03-dam-browser.png?profile=screenshots-grey-border" alt="Sirv DAM browser inside Strapi">
+</div>
+<p>Click an asset to preview it. Images show a large preview; spins, viewers and videos render an interactive live preview. From here you can open the original file or open it on my.sirv.com. Click <strong>Use this asset</strong> to store it in the field.</p>
+<div class="Sirv" data-options="fullscreen.always:true" style="margin-bottom:30px">
+<img class="Sirv" data-src="https://sirv.sirv.com/website/screenshots/strapi/04-asset-details.png?profile=screenshots-grey-border" alt="Asset preview with details and actions">
+</div>
+<p>The picked asset appears in the field with a thumbnail. Its title and description (if set on Sirv) are stored automatically as alt text and caption.</p>
+<div class="Sirv" data-options="fullscreen.always:true" style="margin-bottom:30px">
+<img class="Sirv" data-src="https://sirv.sirv.com/website/screenshots/strapi/06-edit-content.png?profile=screenshots-grey-border" alt="Content editor showing a picked Sirv asset">
+</div>
+
+<h3 id="pick-multiple-assets">Pick multiple assets (gallery) <a class="toc-anchor" href="#pick-multiple-assets"></a></h3>
+<p>For a field with <span class="code-inline">multiple: true</span>, the browser lets you select several assets at once. Tick each asset and click <strong>Add</strong> to build an ordered gallery. Remove or reorder items in the field afterwards.</p>
+<div class="Sirv" data-options="fullscreen.always:true" style="margin-bottom:30px">
+<img class="Sirv" data-src="https://sirv.sirv.com/website/screenshots/strapi/05-dam-browser-multiple-selection.png?profile=screenshots-grey-border" alt="Selecting multiple assets in the Sirv DAM browser">
+</div>
+
+<h2 id="render-on-your-frontend">Render on your frontend <a class="toc-anchor" href="#render-on-your-frontend"></a></h2>
+<p>Each <span class="code-inline">Sirv media</span> value is stored in a shape that the companion <a href="https://www.npmjs.com/package/@sirv/react" target="_blank" rel="noopener noreferrer"><span class="code-inline">@sirv/react</span></a> package renders directly, no conversion needed. Install it in your frontend (Next.js, Nuxt, Astro, Remix, etc.):</p>
+<pre class="prettyprint lang-bash">npm install @sirv/react</pre>
+<p>Fetch your content from Strapi's REST or GraphQL API, then pass the stored value to the matching component:</p>
+<pre class="prettyprint lang-tsx">import { SirvProvider, SirvImage, SirvVideo, SirvSpin, SirvView, SirvMedia, SirvGallery } from '@sirv/react';
+
+export default function Post({ post }) {
+  return (
+    &lt;SirvProvider&gt;
+      {/* Type-specific components */}
+      &lt;SirvImage value={post.hero} width={800} /&gt;
+      &lt;SirvVideo value={post.clip} width={640} /&gt;
+      &lt;SirvSpin  value={post.spin} width={500} height={500} /&gt;
+      &lt;SirvView  value={post.viewer} width={640} height={440} /&gt;
+
+      {/* Or the polymorphic component - renders the right one automatically */}
+      &lt;SirvMedia value={post.hero} width={800} /&gt;
+
+      {/* A gallery from a multiple field */}
+      &lt;SirvGallery items={post.gallery} /&gt;
+    &lt;/SirvProvider&gt;
+  );
+}</pre>
+<p><span class="code-inline">&lt;SirvImage&gt;</span> emits a responsive <span class="code-inline">srcset</span> and lazy-loads by default; <span class="code-inline">&lt;SirvSpin&gt;</span> and <span class="code-inline">&lt;SirvView&gt;</span> load sirv.js for interactive 360 spins and zoom.</p>
+
+<h2 id="faq">FAQ <a class="toc-anchor" href="#faq"></a></h2>
+<section class="sc_fs_faq sc_card ">
+<div>
+<em>Do my files get copied into Strapi?</em>
+<div>
+<p>No. Your files stay on Sirv. The field stores a lightweight reference to the asset, and it is delivered from Sirv's CDN. This keeps your Strapi database small and gives you Sirv's image optimization, responsive images and 360/zoom for free.</p>
+</div>
+</div>
+</section>
+<section class="sc_fs_faq sc_card ">
+<div>
+<em>Which asset types are supported?</em>
+<div>
+<p>Images, videos, 360 spins and Sirv Media Viewers. You can restrict what a field accepts with the field's <span class="code-inline">allowedTypes</span> option.</p>
+</div>
+</div>
+</section>
+<section class="sc_fs_faq sc_card ">
+<div>
+<em>Are my Sirv credentials safe?</em>
+<div>
+<p>Yes. Your Client ID and secret are validated and then stored encrypted on the Strapi server. All Sirv API calls are proxied server-side, so credentials are never sent to the browser.</p>
+</div>
+</div>
+</section>
+<section class="sc_fs_faq sc_card ">
+<div>
+<em>Why aren't thumbnails showing in the admin?</em>
+<div>
+<p>Strapi's admin sets a strict Content-Security-Policy that blocks external images. Add <span class="code-inline">https://*.sirv.com</span> to <span class="code-inline">img-src</span> and <span class="code-inline">media-src</span> (and <span class="code-inline">https://scripts.sirv.com</span> to <span class="code-inline">script-src</span>) in <span class="code-inline">config/middlewares.ts</span>, as shown in the installation steps.</p>
+</div>
+</div>
+</section>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Do my files get copied into Strapi?",
+      "acceptedAnswer": { "@type": "Answer", "text": "No. Your files stay on Sirv. The field stores a lightweight reference to the asset, and it is delivered from Sirv's CDN. This keeps your Strapi database small and gives you Sirv's image optimization, responsive images and 360/zoom for free." }
+    },
+    {
+      "@type": "Question",
+      "name": "Which asset types are supported?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Images, videos, 360 spins and Sirv Media Viewers. You can restrict what a field accepts with the field's allowedTypes option." }
+    },
+    {
+      "@type": "Question",
+      "name": "Are my Sirv credentials safe?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes. Your Client ID and secret are validated and then stored encrypted on the Strapi server. All Sirv API calls are proxied server-side, so credentials are never sent to the browser." }
+    },
+    {
+      "@type": "Question",
+      "name": "Why aren't thumbnails showing in the admin?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Strapi's admin sets a strict Content-Security-Policy that blocks external images. Add https://*.sirv.com to img-src and media-src (and https://scripts.sirv.com to script-src) in config/middlewares.ts, as shown in the installation steps." }
+    }
+  ]
+}
+</script>
+
+  <p><script src="https://scripts.sirv.com/sirvjs/v3/sirv.js"></script></p>
