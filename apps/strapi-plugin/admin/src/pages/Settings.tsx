@@ -25,12 +25,6 @@ const SettingsPage = () => {
               defaultMessage: 'Sirv configuration',
             })}
           </Typography>
-          <Typography variant="epsilon" textColor="neutral600">
-            {formatMessage({
-              id: getTranslation('settings.subtitle'),
-              defaultMessage: 'Connect your Sirv account.',
-            })}
-          </Typography>
         </Flex>
 
         <Flex direction="column" alignItems="stretch" gap={6} marginTop={8}>
