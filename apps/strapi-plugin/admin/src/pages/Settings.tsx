@@ -1,12 +1,12 @@
-import { Badge, Box, Button, Flex, Main, Typography } from '@strapi/design-system';
+import { Box, Flex, Main, Typography } from '@strapi/design-system';
 import { useIntl } from 'react-intl';
+import { ConnectPanel } from '../components/connect/ConnectPanel';
 import { getTranslation } from '../getTranslation';
 
 /**
- * Settings page (Settings -> Sirv -> Configuration). Milestone 1 renders connection
- * status as "Not connected" plus a disabled Connect action. Milestones 3-4 wire the
- * login modal + account picker (from `@sirv/core`) to the server auth endpoints, and
- * milestone 7 adds usage + default transformations.
+ * Settings page (Settings -> Sirv -> Configuration). Hosts the connection panel: login (email +
+ * password + OTP + account picker) or the paste-REST-credentials fallback, and the connected
+ * state with a disconnect action. Usage + default transformations arrive in milestone 7.
  */
 const SettingsPage = () => {
   const { formatMessage } = useIntl();
@@ -30,19 +30,11 @@ const SettingsPage = () => {
         </Flex>
 
         <Box marginTop={8} padding={6} background="neutral0" hasRadius borderColor="neutral200">
-          <Flex justifyContent="space-between" alignItems="center">
-            <Flex direction="column" alignItems="flex-start" gap={1}>
-              <Typography variant="delta" tag="h2">
-                Connection
-              </Typography>
-              <Badge>
-                {formatMessage({
-                  id: getTranslation('settings.status.disconnected'),
-                  defaultMessage: 'Not connected',
-                })}
-              </Badge>
-            </Flex>
-            <Button disabled>Connect Sirv account</Button>
+          <Flex direction="column" alignItems="stretch" gap={4}>
+            <Typography variant="delta" tag="h2">
+              Connection
+            </Typography>
+            <ConnectPanel />
           </Flex>
         </Box>
       </Box>

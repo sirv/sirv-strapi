@@ -30,6 +30,9 @@ coverage/
 *.log
 *.pid
 
+# Claude Code preview launch config (machine/tool-specific)
+.claude/launch.json
+
 # Strapi runtime
 .tmp/
 .strapi/

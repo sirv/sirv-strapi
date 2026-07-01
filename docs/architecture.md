@@ -94,9 +94,29 @@ server bundle stays UI-free).
 
 - Milestone 1: scaffold (sidebar, settings stub, custom-field registration, route stubs, packages,
   example app, smoke tests).
-- Milestone 2 (this change): server-side Sirv client + auth + REST proxy. `/sirv/auth/*` and
-  `/sirv/dam/*` implemented; encryption + encrypted token storage; verified end-to-end against the
-  live Sirv API (connect -> status -> folder/search/file/thumb/usage -> logout), all behind
+- Milestone 2: server-side Sirv client + auth + REST proxy. `/sirv/auth/*` and `/sirv/dam/*`
+  implemented; encryption + encrypted token storage; verified end-to-end against the live Sirv API
+  (connect -> status -> folder/search/file/thumb/usage -> logout), all behind
   `admin::isAuthenticatedAdmin`.
-- Milestones 3-9: encryption/refresh polish, admin login modal + account picker UI, the
-  `sirv-media` field picker, DAM browser, settings page, examples.
+- Milestone 3: encrypted token storage hardened (round-trip test through the plugin store,
+  APP_KEYS-rotation safety). Transparent bearer refresh is inherent - `@sirv/sirv-client` mints
+  and caches bearers from the stored clientId/secret and re-mints on 401 (Sirv has no refresh
+  token); nothing bearer-shaped is persisted.
+- Milestone 4 (this change): admin connect UI. `useSirvConnection` hook + a typed `sirv-api`
+  client over `useFetchClient`; `ConnectPanel` with login (email/password), OTP, account picker,
+  and the paste-REST-credentials fallback, plus the connected view with disconnect - all in the
+  Settings page. Verified in a real browser: login-form errors surface, the connected view shows
+  the account, and disconnect returns to the form.
+- Milestones 5-9: the `sirv-media` field picker, DAM browser, settings polish (usage / default
+  transformations), dedicated DAM page, examples.
+
+### Admin connect flow (milestone 4)
+
+`admin/src/`:
+- `api/sirv-api.ts` - typed calls to `/sirv/*` over the injected fetch client (pure, testable).
+- `hooks/useSirvConnection.ts` - the state machine: phase (loading/disconnected/connected) and
+  connect stage (form/otp/select). Holds the pending email/password in a ref for the OTP retry;
+  never renders or persists them.
+- `components/connect/` - `LoginForm`, `OtpForm`, `AccountPicker`, `CredentialsForm`, and
+  `ConnectPanel` (the orchestrator), all Strapi Design System. The browser only ever exchanges
+  connection status and login inputs; secrets stay server-side.
