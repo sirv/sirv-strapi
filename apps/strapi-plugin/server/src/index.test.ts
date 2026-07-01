@@ -41,10 +41,15 @@ describe('server plugin entry', () => {
   });
 
   it('settings.find reports a connection status without leaking secrets', async () => {
+    const strapi: any = {
+      plugin: () => ({
+        service: () => ({ getStatus: async () => ({ connected: false }) }),
+      }),
+    };
     const ctx: any = {};
     const factory = plugin.controllers.settings;
     expect(factory).toBeTypeOf('function');
-    const settings: any = factory?.({ strapi: fakeStrapi() });
+    const settings: any = factory?.({ strapi });
     await settings.find(ctx);
     expect(ctx.body).toEqual({ connected: false });
   });

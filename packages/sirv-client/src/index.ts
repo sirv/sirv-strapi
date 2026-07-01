@@ -10,6 +10,17 @@ export {
   type AliasOption,
 } from './account.js';
 
+// Connect flow (email + password + OTP + account picker; server-side hosts)
+export {
+  mintAppToken,
+  listUserAccounts,
+  getRestCredentials,
+  validateAndGetAlias,
+  isConnectableRole,
+  type LoginParams,
+  type LoginOutcome,
+} from './connect.js';
+
 // Asset classification
 export {
   classifyAssetType,

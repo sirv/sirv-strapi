@@ -103,3 +103,12 @@ server endpoints rather than letting them hold credentials. `packages/sirv-clien
 
 - M1: vendored 3 packages instead of npm deps (not yet published). De-Sanity-fied the `@sirv/core`
   package description. Everything else under `packages/*/src` is unchanged from Sanity.
+- M2: **enhanced** `@sirv/sirv-client` with `connect.ts` (the email/password/OTP/account-picker
+  flow the Sanity build shelved). This is host-agnostic and worth back-porting to the Sanity repo
+  so it can offer the hosted flow too. Added subpath exports to `@sirv/core`
+  (`./assets`, `./search-query`, `./types`) so the Strapi server can reuse the pure mappers/query
+  builder WITHOUT importing the React/DOM layer (the server tsconfig has no DOM lib). No `src`
+  files were moved or rewritten; the additions are additive.
+- M2: the Strapi plugin's `@sirv/*` deps are **devDependencies** (like the Sanity plugin), so the
+  SDK build inlines them into `dist` (the packages ship as TS source, not built JS). Only `zod` is
+  a runtime dependency.
