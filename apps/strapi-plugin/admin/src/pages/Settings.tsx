@@ -1,5 +1,7 @@
 import { Box, Flex, Main, Typography } from '@strapi/design-system';
+import { useState } from 'react';
 import { useIntl } from 'react-intl';
+import { SirvPreferences } from '../components/SirvPreferences';
 import { ConnectPanel } from '../components/connect/ConnectPanel';
 import { getTranslation } from '../getTranslation';
 
@@ -10,6 +12,7 @@ import { getTranslation } from '../getTranslation';
  */
 const SettingsPage = () => {
   const { formatMessage } = useIntl();
+  const [rev, setRev] = useState(0);
 
   return (
     <Main>
@@ -29,14 +32,18 @@ const SettingsPage = () => {
           </Typography>
         </Flex>
 
-        <Box marginTop={8} padding={6} background="neutral0" hasRadius borderColor="neutral200">
-          <Flex direction="column" alignItems="stretch" gap={4}>
-            <Typography variant="delta" tag="h2">
-              Connection
-            </Typography>
-            <ConnectPanel />
-          </Flex>
-        </Box>
+        <Flex direction="column" alignItems="stretch" gap={6} marginTop={8}>
+          <Box padding={6} background="neutral0" hasRadius borderColor="neutral200">
+            <Flex direction="column" alignItems="stretch" gap={4}>
+              <Typography variant="delta" tag="h2">
+                Connection
+              </Typography>
+              <ConnectPanel onConnectionChange={() => setRev((r) => r + 1)} />
+            </Flex>
+          </Box>
+
+          <SirvPreferences key={rev} />
+        </Flex>
       </Box>
     </Main>
   );

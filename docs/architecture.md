@@ -110,7 +110,15 @@ server bundle stays UI-free).
 - Milestones 5, 6, 8 (this change): the `sirv-media` field picker + DAM browser + type filters +
   dedicated DAM page. Verified end-to-end in a real browser against the live account: picking an
   image in the content editor stored a valid `SirvFieldValue` and rendered a thumbnail preview.
-- Milestones 7, 9: settings polish (usage / default transformations), examples (Next.js).
+- Milestone 7: settings polish. A `preferences` service stores default transformations in the
+  plugin store; the Settings page shows account usage (storage/files) and a
+  quality/format defaults form alongside the connection panel.
+- Milestone 9: examples. The example Strapi app gained a "Sirv Showcase" content type with one
+  field per asset type (image/video/spin/view) plus a polymorphic `anyMedia`, and grants public
+  read in its bootstrap. `examples/next` fetches the published showcase and renders each field
+  with `@sirv/react` (`SirvImage`/`SirvVideo`/`SirvSpin`/`SirvView`/`SirvMedia`) - the stored value
+  is passed straight through as `value`.
+- Milestone 10 (remaining): marketplace submission, top-level README polish, blog/landing.
 
 ### DAM browser + field picker (milestones 5/6/8)
 

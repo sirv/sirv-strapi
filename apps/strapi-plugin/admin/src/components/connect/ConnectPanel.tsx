@@ -1,5 +1,5 @@
 import { Badge, Box, Button, Flex, Loader, Typography } from '@strapi/design-system';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ConnectionStatus } from '../../api/sirv-api';
 import { useSirvConnection } from '../../hooks/useSirvConnection';
 import { AccountPicker } from './AccountPicker';
@@ -36,9 +36,22 @@ const ConnectedView = ({ connection, onDisconnect, busy }: ConnectedViewProps) =
  * Orchestrates the connect flow using `useSirvConnection`: renders the connected view, or the
  * appropriate step (login / OTP / account picker / paste-credentials) while disconnected.
  */
-export const ConnectPanel = () => {
+export interface ConnectPanelProps {
+  /** Fired when the connection phase settles to connected/disconnected (for parent refresh). */
+  onConnectionChange?: (connected: boolean) => void;
+}
+
+export const ConnectPanel = ({ onConnectionChange }: ConnectPanelProps) => {
   const conn = useSirvConnection();
   const [mode, setMode] = useState<'login' | 'credentials'>('login');
+
+  // Notify the parent when connection settles, so it can refetch usage / defaults.
+  const lastPhase = useRef<string>('');
+  useEffect(() => {
+    if (conn.phase === 'loading' || conn.phase === lastPhase.current) return;
+    lastPhase.current = conn.phase;
+    onConnectionChange?.(conn.phase === 'connected');
+  }, [conn.phase, onConnectionChange]);
 
   if (conn.phase === 'loading') {
     return (
